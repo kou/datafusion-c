@@ -60,11 +60,13 @@ jobs:
         with:
           override: true
           toolchain: stable
-      - name: Cache Cargo
+      - name: Cache
         uses: actions/cache@v2
         with:
-          path: ~/.cargo
-          key: cargo-doc-${{ steps.rust-toolchain.outputs.rustc_hash }}-${{ hashFiles('**/Cargo.toml') }}
+          path: |
+            ~/.cargo/
+            build/*-*-*-*/
+          key: doc-${{ steps.rust-toolchain.outputs.rustc_hash }}-${{ hashFiles('**/Cargo.toml') }}
       - name: Install cargo-c
         uses: actions-rs/cargo@v1
         with:

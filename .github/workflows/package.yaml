@@ -161,16 +161,45 @@ jobs:
         run: |
           cd package
           rake version:update RELEASE_DATE=$(date +%Y-%m-%d)
-      - name: Cache ccache
+      - name: Cache
         uses: actions/cache@v2
         with:
-          path: package/${{ matrix.task-namespace }}/build/${{ matrix.target }}/ccache
-          key: package-${{ matrix.id }}-ccache-${{ hashFiles('datafusion-glib/**/*.{c,h}', 'src/**/*.rs') }}
-          restore-keys: package-${{ matrix.id }}-ccache-
-      - name: Build with docker
+          path: |
+            package/${{ matrix.task-namespace }}/build/${{ matrix.target }}/ccache
+            package/${{ matrix.task-namespace }}/build/${{ matrix.target }}/datafusion-c-*/obj-*/*-*-*-*/
+            package/${{ matrix.task-namespace }}/build/${{ matrix.target }}/rpmbuild/BUILD/datafusion-c-*/build/*-*-*-*/
+          key: package-${{ matrix.id }}-${{ hashFiles('datafusion-glib/**/*.{c,h}', 'src/**/*.rs') }}
+          restore-keys: package-${{ matrix.id }}-
+      - uses: docker/login-action@v1
+        if: |
+          github.event_name == 'push'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull Docker image
+        continue-on-error: true
         run: |
           cd package
+          rake docker:pull
+        env:
+          APT_TARGETS: ${{ matrix.target }}
+          YUM_TARGETS: ${{ matrix.target }}
+      - name: Build with Docker
+        run: |
+          cd package
+          rake docker:pull || :
           rake ${{ matrix.task-namespace }}:build BUILD_DIR=build
+        env:
+          APT_TARGETS: ${{ matrix.target }}
+          YUM_TARGETS: ${{ matrix.target }}
+      - name: Push Docker image
+        if: |
+          github.event_name == 'push'
+        continue-on-error: true
+        run: |
+          cd package
+          rake docker:push
         env:
           APT_TARGETS: ${{ matrix.target }}
           YUM_TARGETS: ${{ matrix.target }}

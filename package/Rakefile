@@ -45,6 +45,14 @@ class DataFusionPackageTask < PackageTask
     end
   end
 
+  def github_repository
+    ENV["GITHUB_REPOSITORY"] || "datafusion-contrib/datafusion-c"
+  end
+
+  def docker_image(os, architecture)
+    "ghcr.io/#{github_repository}/package/#{super}"
+  end
+
   def top_source_dir
     Pathname(__dir__).parent
   end
@@ -84,8 +92,6 @@ class DataFusionPackageTask < PackageTask
   end
 
   def built_package_url(target_namespace, target)
-    github_repository =
-      ENV["GITHUB_REPOSITORY"] || "datafusion-contrib/datafusion-c"
     url = "https://github.com/#{github_repository}"
     url << "/releases/download/#{@version}/"
     case target_namespace
