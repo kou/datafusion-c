@@ -68,6 +68,86 @@
   
 </a>
     
+    <div class="dropdown" id="version_switcher">
+    <button type="button" class="btn btn-sm navbar-btn dropdown-toggle" id="version_switcher_button" data-toggle="dropdown">
+        main  <!-- this text may get changed later by javascript -->
+        <span class="caret"></span>
+    </button>
+    <div id="version_switcher_menu" class="dropdown-menu list-group-flush py-0" aria-labelledby="version_switcher_button">
+    <!-- dropdown will be populated by javascript on page load -->
+    </div>
+</div>
+
+<!-- NOTE: this JS must live here (not in our global JS file) because it relies
+     on being processed by Jinja before it is run (specifically for replacing
+     variables raw-c-api and {'json_url': 'https://datafusion-contrib.github.io/datafusion-c/latest/_static/switcher.json', 'version_match': 'main'}.
+-->
+
+<script type="text/javascript">
+// Check if corresponding page path exists in other version of docs
+// and, if so, go there instead of the homepage of the other docs version
+function checkPageExistsAndRedirect(event) {
+    const currentFilePath = "raw-c-api.html",
+          tryUrl = event.target.getAttribute("href");
+    let otherDocsHomepage = tryUrl.replace(currentFilePath, "");
+    $.ajax({
+        type: 'HEAD',
+        url: tryUrl,
+        // if the page exists, go there
+        success: function() {
+            location.href = tryUrl;
+        }
+    }).fail(function() {
+        location.href = otherDocsHomepage;
+    });
+    // this prevents the browser from following the href of the clicked node
+    // (which is fine because this function takes care of redirecting)
+    return false;
+}
+
+// Populate the version switcher from the JSON config file
+(function () {
+    $.getJSON("https://datafusion-contrib.github.io/datafusion-c/latest/_static/switcher.json", function(data, textStatus, jqXHR) {
+        const currentFilePath = "raw-c-api.html";
+        let btn = document.getElementById("version_switcher_button");
+        // Set empty strings by default so that these attributes exist and can be used in CSS selectors
+        btn.dataset["activeVersionName"] = "";
+        btn.dataset["activeVersion"] = "";
+        // create links to the corresponding page in the other docs versions
+        $.each(data, function(index, entry) {
+            // if no custom name specified (e.g., "latest"), use version string
+            if (!("name" in entry)) {
+                entry.name = entry.version;
+            }
+            // create the node
+            const node = document.createElement("a");
+            node.setAttribute("class", "list-group-item list-group-item-action py-1");
+            node.textContent = `${entry.name}`;
+            node.setAttribute("href", `${entry.url}${currentFilePath}`);
+            // on click, AJAX calls will check if the linked page exists before
+            // trying to redirect, and if not, will redirect to the homepage
+            // for that version of the docs.
+            node.onclick = checkPageExistsAndRedirect;
+            // Add dataset values for the version and name in case people want
+            // to apply CSS styling based on this information.
+            node.dataset["versionName"] = entry.name;
+            node.dataset["version"] = entry.version;
+
+            $("#version_switcher_menu").append(node);
+            // replace dropdown button text with the preferred display name of
+            // this version, rather than using sphinx's 10.0.0 variable.
+            // also highlight the dropdown entry for the currently-viewed
+            // version's entry
+            if (entry.version == "main") {
+                node.classList.add("active");
+                btn.innerText = btn.dataset["activeVersionName"] = entry.name;
+                btn.dataset["activeVersion"] = entry.version;
+            }
+        });
+    });
+})();
+</script>
+    
   </div>
 
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,8 +158,43 @@
   <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
     <div id="navbar-center" class="mr-auto">
       
-      <div class="navbar-center-item">
-        <ul id="navbar-main-elements" class="navbar-nav">
+    </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <span id="theme-switch" class="btn btn-sm btn-outline-primary navbar-btn rounded-circle">
+    <a class="theme-switch" data-mode="light"><i class="fas fa-sun"></i></a>
+    <a class="theme-switch" data-mode="dark"><i class="far fa-moon"></i></a>
+    <a class="theme-switch" data-mode="auto"><i class="fas fa-adjust"></i></a>
+</span>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/datafusion-contrib/datafusion-c" rel="noopener" target="_blank" title="GitHub"><span><i class="fab fa-github-square"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>
+    </nav>
+    
+
+    <div class="bd-container container-xl">
+      <div class="bd-container__inner row">
+          
+
+<!-- Only show if we have sidebars configured, else just a small margin  -->
+<div class="bd-sidebar-primary col-12 col-md-3 bd-sidebar">
+  <div class="sidebar-start-items"><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><ul id="navbar-main-elements" class="navbar-nav">
     <li class="toctree-l1 nav-item">
  <a class="reference internal nav-link" href="introduction.html">
   Introduction
@@ -111,42 +226,7 @@
 </li>
 
     
-</ul>
-      </div>
-      
-    </div>
-
-    <div id="navbar-end">
-      
-      <div class="navbar-end-item">
-        <span id="theme-switch" class="btn btn-sm btn-outline-primary navbar-btn rounded-circle">
-    <a class="theme-switch" data-mode="light"><i class="fas fa-sun"></i></a>
-    <a class="theme-switch" data-mode="dark"><i class="far fa-moon"></i></a>
-    <a class="theme-switch" data-mode="auto"><i class="fas fa-adjust"></i></a>
-</span>
-      </div>
-      
-      <div class="navbar-end-item">
-        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
-      </ul>
-      </div>
-      
-    </div>
-  </div>
-</div>
-    </nav>
-    
-
-    <div class="bd-container container-xl">
-      <div class="bd-container__inner row">
-          
-
-<!-- Only show if we have sidebars configured, else just a small margin  -->
-<div class="bd-sidebar-primary col-12 col-md-3 bd-sidebar">
-  <div class="sidebar-start-items"><form class="bd-search d-flex align-items-center" action="search.html" method="get">
-  <i class="icon fas fa-search"></i>
-  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
-</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+</ul><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
   <div class="bd-toc-item active">
     
   </div>
@@ -173,6 +253,13 @@
     
     <div class="toc-item">
       
+
+<div class="tocsection editthispage">
+    <a href="https://github.com/datafusion-contrib/datafusion-c/edit/main/doc/source/raw-c-api.rst">
+        <i class="fas fa-pencil-alt"></i> Edit this page
+    </a>
+</div>
+
     </div>
     
   
@@ -190,7 +277,11 @@
 <dl class="c struct">
 <dt class="sig sig-object c" id="c.DFArrowArray">
 <span class="target" id="structDFArrowArray"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DFArrowArray</span></span></span><a class="headerlink" href="#c.DFArrowArray" title="Permalink to this definition">#</a><br /></dt>
-<dd><div class="breathe-sectiondef docutils container">
+<dd><div class="docutils container">
+<em>#include &lt;<a class="reference internal" href="#datafusion_8h"><span class="std std-ref">datafusion.h</span></a>&gt;</em></div>
+<p>Same as the <code class="docutils literal notranslate"><span class="pre">ArrowArray</span></code> struct in the Arrow C data interface. </p>
+<p>See also: <a class="reference external" href="https://arrow.apache.org/docs/format/CDataInterface.html#the-arrowarray-structure">https://arrow.apache.org/docs/format/CDataInterface.html#the-arrowarray-structure</a> </p>
+<div class="breathe-sectiondef docutils container">
 <p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
 <dl class="c var">
 <dt class="sig sig-object c" id="c.DFArrowArray.length">
@@ -248,7 +339,11 @@
 <dl class="c struct">
 <dt class="sig sig-object c" id="c.DFArrowSchema">
 <span class="target" id="structDFArrowSchema"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DFArrowSchema</span></span></span><a class="headerlink" href="#c.DFArrowSchema" title="Permalink to this definition">#</a><br /></dt>
-<dd><div class="breathe-sectiondef docutils container">
+<dd><div class="docutils container">
+<em>#include &lt;<a class="reference internal" href="#datafusion_8h"><span class="std std-ref">datafusion.h</span></a>&gt;</em></div>
+<p>Same as the <code class="docutils literal notranslate"><span class="pre">ArrowSchema</span></code> struct in the Arrow C data interface. </p>
+<p>See also: <a class="reference external" href="https://arrow.apache.org/docs/format/CDataInterface.html#the-arrowschema-structure">https://arrow.apache.org/docs/format/CDataInterface.html#the-arrowschema-structure</a> </p>
+<div class="breathe-sectiondef docutils container">
 <p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
 <dl class="c var">
 <dt class="sig sig-object c" id="c.DFArrowSchema.format">
@@ -298,6 +393,35 @@
 </div>
 </dd></dl>
 
+<dl class="c struct">
+<dt class="sig sig-object c" id="c.DFDataFrame">
+<span class="target" id="structDFDataFrame"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DFDataFrame</span></span></span><a class="headerlink" href="#c.DFDataFrame" title="Permalink to this definition">#</a><br /></dt>
+<dd><div class="docutils container">
+<em>#include &lt;<a class="reference internal" href="#datafusion_8h"><span class="std std-ref">datafusion.h</span></a>&gt;</em></div>
+<p>A struct for data frame. </p>
+<p>You get execution result as a data frame.</p>
+<p>You need to free data frame by <code class="docutils literal notranslate"><span class="pre">df_data_frame_free()</span></code> when no longer needed. </p>
+</dd></dl>
+
+<dl class="c struct">
+<dt class="sig sig-object c" id="c.DFError">
+<span class="target" id="structDFError"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DFError</span></span></span><a class="headerlink" href="#c.DFError" title="Permalink to this definition">#</a><br /></dt>
+<dd><div class="docutils container">
+<em>#include &lt;<a class="reference internal" href="#datafusion_8h"><span class="std std-ref">datafusion.h</span></a>&gt;</em></div>
+<p>A struct that holds error information. </p>
+<p>You can access to error information by <code class="docutils literal notranslate"><span class="pre">df_error_get_code()</span></code> and <code class="docutils literal notranslate"><span class="pre">df_error_get_message()</span></code>.</p>
+<p>You need to free error information by <code class="docutils literal notranslate"><span class="pre">df_error_free()</span></code> when no longer needed. </p>
+</dd></dl>
+
+<dl class="c struct">
+<dt class="sig sig-object c" id="c.DFSessionContext">
+<span class="target" id="structDFSessionContext"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DFSessionContext</span></span></span><a class="headerlink" href="#c.DFSessionContext" title="Permalink to this definition">#</a><br /></dt>
+<dd><div class="docutils container">
+<em>#include &lt;<a class="reference internal" href="#datafusion_8h"><span class="std std-ref">datafusion.h</span></a>&gt;</em></div>
+<p>An entry point of DataFusion API. </p>
+<p>You need to create <code class="docutils literal notranslate"><a class="reference internal" href="#structDFSessionContext"><span class="std std-ref"><span class="pre">DFSessionContext</span></span></a></code> to use DataFusion API. </p>
+</dd></dl>
+
 <dl>
 <dt class="sig sig-object c">
 <span class="target" id="datafusion_8h"></span><em><span class="pre">file</span></em> <span class="sig-name descname"><span class="pre">datafusion.h</span></span></dt>
@@ -340,13 +464,13 @@
 <dd></dd></dl>
 
 <dl class="c type">
-<dt class="sig sig-object c" id="c.DFDataFrame">
-<span class="target" id="datafusion_8h_1abe115bab2590cd6b72f47e98b50a5ab9"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.DFDataFrame" title="DFDataFrame"><span class="n"><span class="pre">DFDataFrame</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DFDataFrame</span></span></span><a class="headerlink" href="#c.DFDataFrame" title="Permalink to this definition">#</a><br /></dt>
+<dt class="sig sig-object c">
+<span class="target" id="datafusion_8h_1abe115bab2590cd6b72f47e98b50a5ab9"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.DFDataFrame" title="DFDataFrame"><span class="n"><span class="pre">DFDataFrame</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DFDataFrame</span></span></span><br /></dt>
 <dd></dd></dl>
 
 <dl class="c type">
-<dt class="sig sig-object c" id="c.DFError">
-<span class="target" id="datafusion_8h_1a0a22675fb716d5532e941fb122272944"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.DFError" title="DFError"><span class="n"><span class="pre">DFError</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DFError</span></span></span><a class="headerlink" href="#c.DFError" title="Permalink to this definition">#</a><br /></dt>
+<dt class="sig sig-object c">
+<span class="target" id="datafusion_8h_1a0a22675fb716d5532e941fb122272944"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.DFError" title="DFError"><span class="n"><span class="pre">DFError</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DFError</span></span></span><br /></dt>
 <dd></dd></dl>
 
 <dl class="c type">
@@ -355,8 +479,8 @@
 <dd></dd></dl>
 
 <dl class="c type">
-<dt class="sig sig-object c" id="c.DFSessionContext">
-<span class="target" id="datafusion_8h_1a37b76b162353d80720c43f066af08422"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.DFSessionContext" title="DFSessionContext"><span class="n"><span class="pre">DFSessionContext</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DFSessionContext</span></span></span><a class="headerlink" href="#c.DFSessionContext" title="Permalink to this definition">#</a><br /></dt>
+<dt class="sig sig-object c">
+<span class="target" id="datafusion_8h_1a37b76b162353d80720c43f066af08422"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.DFSessionContext" title="DFSessionContext"><span class="n"><span class="pre">DFSessionContext</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DFSessionContext</span></span></span><br /></dt>
 <dd></dd></dl>
 
 <dl class="c type">
@@ -375,7 +499,8 @@
 <dl class="c enum">
 <dt class="sig sig-object c" id="c.DFErrorCode">
 <span class="target" id="datafusion_8h_1af28a4d9bce1a67fb8e0afaa733d457ec"></span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DFErrorCode</span></span></span><a class="headerlink" href="#c.DFErrorCode" title="Permalink to this definition">#</a><br /></dt>
-<dd><p><em>Values:</em></p>
+<dd><p>Error category. </p>
+<p><em>Values:</em></p>
 <dl class="c enumerator">
 <dt class="sig sig-object c" id="c.DFErrorCode.DF_ERROR_CODE_ARROW">
 <span class="target" id="datafusion_8h_1af28a4d9bce1a67fb8e0afaa733d457eca852bb2ab5462f5835bd732bbd1cd9849"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">DF_ERROR_CODE_ARROW</span></span></span><a class="headerlink" href="#c.DFErrorCode.DF_ERROR_CODE_ARROW" title="Permalink to this definition">#</a><br /></dt>
@@ -459,46 +584,93 @@
 <dl class="c function">
 <dt class="sig sig-object c" id="c.df_error_free">
 <span class="target" id="datafusion_8h_1aa3d4cb6d6ba096998d224a0fd0de5077"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">df_error_free</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.DFError" title="DFError"><span class="n"><span class="pre">DFError</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">_error</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.df_error_free" title="Permalink to this definition">#</a><br /></dt>
-<dd><section id="datafusion_8h_1autotoc_md0">
+<dd><p>Free the given <code class="docutils literal notranslate"><a class="reference internal" href="#structDFError"><span class="std std-ref"><span class="pre">DFError</span></span></a></code>. </p>
+<section id="datafusion_8h_1autotoc_md0">
 <h2>Safety<a class="headerlink" href="#datafusion_8h_1autotoc_md0" title="Permalink to this heading">#</a></h2>
 <p id="datafusion_8h_1autotoc_md0">This function should not be called with <code class="docutils literal notranslate"><span class="pre">error</span></code> that is not created by <code class="docutils literal notranslate"><span class="pre">df_error_new()</span></code>.</p>
 <p>This function should not be called for the same <code class="docutils literal notranslate"><span class="pre">error</span></code> multiple times. </p>
 </section>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_error</strong> – A <code class="docutils literal notranslate"><a class="reference internal" href="#structDFError"><span class="std std-ref"><span class="pre">DFError</span></span></a></code> returned by <code class="docutils literal notranslate"><span class="pre">df_*()</span></code> functions.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.df_error_get_message">
 <span class="target" id="datafusion_8h_1a10a78af31e50c42e8c0a873db74e8071"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">df_error_get_message</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.DFError" title="DFError"><span class="n"><span class="pre">DFError</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">error</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.df_error_get_message" title="Permalink to this definition">#</a><br /></dt>
-<dd><section id="datafusion_8h_1autotoc_md1">
+<dd><p>Get a message of this error. </p>
+<section id="datafusion_8h_1autotoc_md1">
 <h2>Safety<a class="headerlink" href="#datafusion_8h_1autotoc_md1" title="Permalink to this heading">#</a></h2>
 <p id="datafusion_8h_1autotoc_md1">This function should not be called with <code class="docutils literal notranslate"><span class="pre">error</span></code> that is not created by <code class="docutils literal notranslate"><span class="pre">df_error_new()</span></code>.</p>
 <p>This function should not be called with <code class="docutils literal notranslate"><span class="pre">error</span></code> that is freed by <code class="docutils literal notranslate"><span class="pre">df_error_free()</span></code>. </p>
 </section>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>error</strong> – A <code class="docutils literal notranslate"><a class="reference internal" href="#structDFError"><span class="std std-ref"><span class="pre">DFError</span></span></a></code>. </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A message of this error.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.df_error_get_code">
 <span class="target" id="datafusion_8h_1aeeb1f43f7dae9261f4399d6d90b47925"></span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><a class="reference internal" href="#c.DFErrorCode" title="DFErrorCode"><span class="n"><span class="pre">DFErrorCode</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">df_error_get_code</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.DFError" title="DFError"><span class="n"><span class="pre">DFError</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">error</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.df_error_get_code" title="Permalink to this definition">#</a><br /></dt>
-<dd><section id="datafusion_8h_1autotoc_md2">
+<dd><p>Get a code of this error. </p>
+<section id="datafusion_8h_1autotoc_md2">
 <h2>Safety<a class="headerlink" href="#datafusion_8h_1autotoc_md2" title="Permalink to this heading">#</a></h2>
 <p id="datafusion_8h_1autotoc_md2">This function should not be called with <code class="docutils literal notranslate"><span class="pre">error</span></code> that is not created by <code class="docutils literal notranslate"><span class="pre">df_error_new()</span></code>.</p>
 <p>This function should not be called with <code class="docutils literal notranslate"><span class="pre">error</span></code> that is freed by <code class="docutils literal notranslate"><span class="pre">df_error_free()</span></code>. </p>
 </section>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>error</strong> – A <code class="docutils literal notranslate"><a class="reference internal" href="#structDFError"><span class="std std-ref"><span class="pre">DFError</span></span></a></code>. </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A code of this error.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.df_data_frame_free">
 <span class="target" id="datafusion_8h_1a3cbc6250cd92b60f88fb7aa1568c445c"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">df_data_frame_free</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.DFDataFrame" title="DFDataFrame"><span class="n"><span class="pre">DFDataFrame</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">_data_frame</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.df_data_frame_free" title="Permalink to this definition">#</a><br /></dt>
-<dd><section id="datafusion_8h_1autotoc_md3">
+<dd><p>Free the given <code class="docutils literal notranslate"><a class="reference internal" href="#structDFDataFrame"><span class="std std-ref"><span class="pre">DFDataFrame</span></span></a></code>. </p>
+<section id="datafusion_8h_1autotoc_md3">
 <h2>Safety<a class="headerlink" href="#datafusion_8h_1autotoc_md3" title="Permalink to this heading">#</a></h2>
 <p id="datafusion_8h_1autotoc_md3">This function should not be called for the same <code class="docutils literal notranslate"><span class="pre">data_frame</span></code> multiple times. </p>
 </section>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_data_frame</strong> – A <code class="docutils literal notranslate"><a class="reference internal" href="#structDFDataFrame"><span class="std std-ref"><span class="pre">DFDataFrame</span></span></a></code>.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.df_data_frame_show">
 <span class="target" id="datafusion_8h_1a677163d52fdabb244caa45020896e75e"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">df_data_frame_show</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.DFDataFrame" title="DFDataFrame"><span class="n"><span class="pre">DFDataFrame</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">data_frame</span></span>, <span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.DFError" title="DFError"><span class="n"><span class="pre">DFError</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">error</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.df_data_frame_show" title="Permalink to this definition">#</a><br /></dt>
-<dd></dd></dl>
+<dd><p>Show the given data frame contents to the standard output. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_frame</strong> – A <code class="docutils literal notranslate"><a class="reference internal" href="#structDFDataFrame"><span class="std std-ref"><span class="pre">DFDataFrame</span></span></a></code> to be shown. </p></li>
+<li><p><strong>error</strong> – Return location for a <code class="docutils literal notranslate"><a class="reference internal" href="#structDFError"><span class="std std-ref"><span class="pre">DFError</span></span></a></code> or <code class="docutils literal notranslate"><span class="pre">NULL</span></code>. </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.df_data_frame_export">
@@ -508,16 +680,32 @@
 <dl class="c function">
 <dt class="sig sig-object c" id="c.df_session_context_new">
 <span class="target" id="datafusion_8h_1a1700198e5eed45d76ced59bb78ddd2e9"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.DFSessionContext" title="DFSessionContext"><span class="n"><span class="pre">DFSessionContext</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">df_session_context_new</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">void</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.df_session_context_new" title="Permalink to this definition">#</a><br /></dt>
-<dd></dd></dl>
+<dd><p>Create a new <code class="docutils literal notranslate"><a class="reference internal" href="#structDFSessionContext"><span class="std std-ref"><span class="pre">DFSessionContext</span></span></a></code>. </p>
+<p>
+It should be freed by <code class="docutils literal notranslate"><span class="pre">df_session_context_free()</span></code> when no longer needed. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A newly created <code class="docutils literal notranslate"><a class="reference internal" href="#structDFSessionContext"><span class="std std-ref"><span class="pre">DFSessionContext</span></span></a></code>.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="c function">
 <dt class="sig sig-object c" id="c.df_session_context_free">
 <span class="target" id="datafusion_8h_1ad06ccb819c35e34248c3e14d42a372a4"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">df_session_context_free</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#c.DFSessionContext" title="DFSessionContext"><span class="n"><span class="pre">DFSessionContext</span></span></a><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n"><span class="pre">_context</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.df_session_context_free" title="Permalink to this definition">#</a><br /></dt>
-<dd><section id="datafusion_8h_1autotoc_md4">
+<dd><p>Free the given <code class="docutils literal notranslate"><a class="reference internal" href="#structDFSessionContext"><span class="std std-ref"><span class="pre">DFSessionContext</span></span></a></code>. </p>
+<section id="datafusion_8h_1autotoc_md4">
 <h2>Safety<a class="headerlink" href="#datafusion_8h_1autotoc_md4" title="Permalink to this heading">#</a></h2>
 <p id="datafusion_8h_1autotoc_md4">This function should not be called with <code class="docutils literal notranslate"><span class="pre">context</span></code> that is not created by <code class="docutils literal notranslate"><span class="pre">df_session_context_new()</span></code>.</p>
 <p>This function should not be called for the same <code class="docutils literal notranslate"><span class="pre">context</span></code> multiple times. </p>
 </section>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_context</strong> – A <code class="docutils literal notranslate"><a class="reference internal" href="#structDFSessionContext"><span class="std std-ref"><span class="pre">DFSessionContext</span></span></a></code> created by <code class="docutils literal notranslate"><span class="pre">df_session_context_new()</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="c function">
